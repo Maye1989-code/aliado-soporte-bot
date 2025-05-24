@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,13 +21,15 @@ const ChatBot = ({ isOpen, onClose }: ChatBotProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "¡Hola! Soy Eva, tu asistente virtual. Estoy aquí para ayudarte con registros de cliente, cambios de nombre, validación de documentos y más. ¿En qué puedo asistirte hoy?",
+      text: "¡Hola! Soy Eva, tu asistente virtual. Estoy aquí para ayudarte de forma amable y profesional con:\n\n• Cambios de nombre o corrección de datos\n• Solicitudes de token para firma de documentos\n• Consultas sobre bloqueo de cupo\n• Preguntas frecuentes sobre documentación\n\n¿En qué puedo asistirte hoy?",
       isUser: false,
       timestamp: new Date()
     }
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [conversationState, setConversationState] = useState<string | null>(null);
+  const [collectedData, setCollectedData] = useState<any>({});
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,17 +68,66 @@ const ChatBot = ({ isOpen, onClose }: ChatBotProps) => {
   const getBotResponse = (userInput: string): string => {
     const input = userInput.toLowerCase();
     
-    if (input.includes("registro") || input.includes("cliente")) {
-      return "Para realizar un registro de cliente, necesitarás: documento de identidad, información de contacto y datos bancarios. ¿Te gustaría que te guíe paso a paso en el proceso?";
-    } else if (input.includes("cambio") && input.includes("nombre")) {
-      return "Para cambios de nombre, puedo ayudarte con el proceso. Necesitarás el documento legal que respalde el cambio. ¿Ya tienes la documentación requerida?";
-    } else if (input.includes("documento") || input.includes("validar")) {
-      return "Puedo ayudarte a validar documentos. Por favor, asegúrate de que los documentos estén en formato PDF o imagen clara. ¿Qué tipo de documento necesitas validar?";
-    } else if (input.includes("backend") || input.includes("sistema")) {
-      return "Te puedo conectar con nuestro sistema backend para consultas más complejas. ¿Necesitas acceso a alguna funcionalidad específica del sistema?";
-    } else {
-      return "Entiendo tu consulta. Puedo ayudarte con registros de cliente, cambios de nombre, validación de documentos y redirección a backend. ¿Podrías ser más específico sobre lo que necesitas?";
+    // Preguntas frecuentes específicas
+    if (input.includes("qué documentos") && input.includes("cambio") && input.includes("nombre")) {
+      return "Para cambio de nombre se requieren:\n\n• Certificado de libertad y tradición no mayor a 30 días\n• Cédula del propietario\n\n¿Necesitas ayuda con algún otro proceso?";
     }
+    
+    if (input.includes("cómo se hace") && input.includes("actualización")) {
+      return "Para realizar una actualización:\n\n• Se adjuntan los documentos completos en la plataforma\n• El tiempo de procesamiento es de 24 horas para actualizarse\n\n¿Tienes alguna otra consulta?";
+    }
+    
+    if (input.includes("escritura pública") && input.includes("cambio") && input.includes("nombre")) {
+      return "No, la escritura pública no es un documento válido para realizar el trámite de cambio de nombre.\n\nDebes usar certificado de libertad y tradición no mayor a 30 días junto con la cédula del propietario.\n\n¿Necesitas más información?";
+    }
+
+    // Flujo de cambio de nombre o corrección de datos
+    if ((input.includes("cambio") && input.includes("nombre")) || input.includes("corrección") || input.includes("datos")) {
+      setConversationState("cambio_nombre");
+      return "Para procesar tu solicitud de cambio de nombre o corrección de datos, necesito que compartas:\n\n• Los documentos requeridos (certificado de libertad y tradición no mayor a 30 días y cédula del propietario)\n• Los datos básicos del cliente\n\nPor favor, confirma que tienes estos documentos listos y son legibles. ¿Están todos los documentos disponibles?";
+    }
+
+    // Flujo de solicitud de token
+    if (input.includes("token") || (input.includes("firma") && input.includes("documento"))) {
+      setConversationState("solicitud_token");
+      return "Para procesar tu solicitud de token para firma de documentos, necesito la siguiente información:\n\n1. Nombre completo del cliente\n2. Correo electrónico\n\nPor favor, proporciona el nombre completo del cliente:";
+    }
+
+    // Consulta sobre bloqueo de cupo
+    if (input.includes("bloqueo") && input.includes("cupo")) {
+      return "Para ayudarte con la consulta sobre bloqueo de cupo, necesito que me indiques el motivo específico que aparece en la plataforma.\n\n¿Cuál es el motivo de bloqueo que se muestra?";
+    }
+
+    // Manejo de flujos activos
+    if (conversationState === "cambio_nombre") {
+      if (input.includes("sí") || input.includes("si") || input.includes("disponibles") || input.includes("listos")) {
+        setConversationState(null);
+        return "Perfecto. Ahora necesito validar que:\n\n✓ Todos los documentos estén presentes\n✓ Sean legibles y vigentes\n✓ El certificado de libertad y tradición no supere los 30 días\n\nSi cumples con estos requisitos, la documentación está completa. Puedes continuar con el registro en la plataforma https://fin.aaa.com.co/admin/pqrs. Recuerda cargar los documentos previamente suministrados.";
+      }
+      if (input.includes("no") || input.includes("falta")) {
+        setConversationState(null);
+        return "Necesitas tener todos los documentos completos antes de continuar. Asegúrate de contar con:\n\n• Certificado de libertad y tradición (no mayor a 30 días)\n• Cédula del propietario\n\nContacta nuevamente cuando tengas toda la documentación lista.";
+      }
+    }
+
+    if (conversationState === "solicitud_token") {
+      if (!collectedData.nombre) {
+        setCollectedData({ nombre: userInput });
+        return "Gracias. Ahora necesito el correo electrónico del cliente:";
+      } else if (!collectedData.email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailRegex.test(userInput)) {
+          setConversationState(null);
+          setCollectedData({});
+          return "Tu solicitud fue enviada. En breve recibirás el token en el correo proporcionado.\n\n¿Hay algo más en lo que pueda ayudarte?";
+        } else {
+          return "El formato del correo electrónico no es válido. Por favor, proporciona un correo electrónico correcto (ejemplo: usuario@dominio.com):";
+        }
+      }
+    }
+
+    // Respuesta por defecto
+    return "Entiendo tu consulta. Puedo ayudarte con:\n\n• Cambios de nombre o corrección de datos\n• Solicitudes de token para firma de documentos\n• Consultas sobre bloqueo de cupo\n• Preguntas frecuentes\n\n¿Podrías ser más específico sobre qué tipo de ayuda necesitas?";
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -130,7 +180,7 @@ const ChatBot = ({ isOpen, onClose }: ChatBotProps) => {
                       )}
                     </div>
                     <div className={`p-3 rounded-2xl ${message.isUser ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-800"}`}>
-                      <p className="text-sm">{message.text}</p>
+                      <p className="text-sm whitespace-pre-line">{message.text}</p>
                       <p className={`text-xs mt-1 ${message.isUser ? "text-blue-100" : "text-gray-500"}`}>
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
@@ -163,7 +213,11 @@ const ChatBot = ({ isOpen, onClose }: ChatBotProps) => {
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    handleSendMessage();
+                  }
+                }}
                 placeholder="Escribe tu mensaje..."
                 className="flex-1 border-gray-200 focus:border-blue-500"
                 disabled={isTyping}

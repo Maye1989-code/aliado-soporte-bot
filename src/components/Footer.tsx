@@ -1,7 +1,14 @@
-
 import { MessageCircle, Users, FileText, UserCheck } from "lucide-react";
+import { useState } from "react";
 
 const Footer = () => {
+  const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
+
+  const iconInfo = {
+    chat: "Asistente virtual inteligente disponible 24/7",
+    users: "Red de más de 1000 aliados comerciales activos"
+  };
+
   return (
     <footer className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-12">
       <div className="max-w-6xl mx-auto px-6">
@@ -14,13 +21,36 @@ const Footer = () => {
               Tu asistente virtual inteligente para todas las necesidades de soporte y gestión.
             </p>
             <div className="flex space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+              <button
+                onClick={() => setSelectedIcon(selectedIcon === 'chat' ? null : 'chat')}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 ${
+                  selectedIcon === 'chat' 
+                    ? 'bg-gradient-to-r from-blue-400 to-purple-400 shadow-lg' 
+                    : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:shadow-lg'
+                }`}
+              >
                 <MessageCircle className="h-5 w-5" />
-              </div>
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+              </button>
+              <button
+                onClick={() => setSelectedIcon(selectedIcon === 'users' ? null : 'users')}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 ${
+                  selectedIcon === 'users' 
+                    ? 'bg-gradient-to-r from-purple-400 to-pink-400 shadow-lg' 
+                    : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:shadow-lg'
+                }`}
+              >
                 <Users className="h-5 w-5" />
-              </div>
+              </button>
             </div>
+            
+            {/* Información del icono seleccionado */}
+            {selectedIcon && (
+              <div className="mt-4 p-3 bg-gray-700/50 rounded-lg border border-gray-600 animate-fade-in">
+                <p className="text-sm text-gray-300">
+                  {iconInfo[selectedIcon as keyof typeof iconInfo]}
+                </p>
+              </div>
+            )}
           </div>
           
           <div>

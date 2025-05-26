@@ -1,12 +1,33 @@
 
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Users, FileText, UserCheck } from "lucide-react";
+import { useState } from "react";
 
 interface HeroSectionProps {
   onOpenChat: () => void;
 }
 
 const HeroSection = ({ onOpenChat }: HeroSectionProps) => {
+  const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
+
+  const iconInfo = {
+    chat: {
+      icon: MessageCircle,
+      title: "Chat Inteligente",
+      description: "Asistente virtual disponible 24/7 para resolver todas tus consultas de manera instantánea."
+    },
+    users: {
+      icon: Users,
+      title: "1000+ Aliados",
+      description: "Red de aliados comerciales que confían en nuestro sistema de soporte inteligente."
+    },
+    validation: {
+      icon: UserCheck,
+      title: "Validación Rápida",
+      description: "Validación automática de documentos y verificación de requisitos en tiempo real."
+    }
+  };
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 py-20">
       <div className="absolute inset-0 bg-white/20 backdrop-blur-sm"></div>
@@ -23,6 +44,39 @@ const HeroSection = ({ onOpenChat }: HeroSectionProps) => {
               Resuelve dudas sobre registros, cambios de nombre, validación de documentos 
               y más con nuestro asistente virtual disponible 24/7.
             </p>
+            
+            {/* Iconos seleccionables */}
+            <div className="flex flex-wrap gap-4 justify-center lg:justify-start mb-8">
+              {Object.entries(iconInfo).map(([key, info]) => {
+                const IconComponent = info.icon;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedIcon(selectedIcon === key ? null : key)}
+                    className={`p-4 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
+                      selectedIcon === key 
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
+                        : 'bg-white/80 text-gray-700 hover:bg-white shadow-md'
+                    }`}
+                  >
+                    <IconComponent className="h-8 w-8" />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Información del icono seleccionado */}
+            {selectedIcon && (
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-blue-200 animate-fade-in">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  {iconInfo[selectedIcon as keyof typeof iconInfo].title}
+                </h3>
+                <p className="text-gray-600">
+                  {iconInfo[selectedIcon as keyof typeof iconInfo].description}
+                </p>
+              </div>
+            )}
+            
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button 
                 onClick={onOpenChat}
